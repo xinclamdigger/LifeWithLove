@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { startOfMonth, format } from "date-fns";
+import { startOfMonth, format, isSameMonth } from "date-fns";
+import Link from "next/link";
+import { Heart, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CalendarNav } from "@/components/calendar/CalendarNav";
 import { CalendarGrid, DAY_HEADERS } from "@/components/calendar/CalendarGrid";
 import type { CoverImage } from "@/components/calendar/CalendarCell";
@@ -10,6 +13,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [coverImages, setCoverImages] = useState<Record<string, CoverImage>>({});
   const [loading, setLoading] = useState(true);
+  const [everHadPhotos, setEverHadPhotos] = useState<boolean | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -31,6 +35,12 @@ export default function CalendarPage() {
           map[item.date] = { imageId: item.imageId, thumbnailUrl: item.thumbnailUrl, photoCount: item.photoCount };
         }
         setCoverImages(map);
+        // If viewing the current month and there are photos, we know they've used the app
+        if (isSameMonth(currentMonth, new Date()) && data.length > 0) {
+          setEverHadPhotos(true);
+        } else if (everHadPhotos === null && data.length === 0 && isSameMonth(currentMonth, new Date())) {
+          setEverHadPhotos(false);
+        }
       })
       .catch((err) => {
         if (err.name !== "AbortError") setCoverImages({});
@@ -42,14 +52,56 @@ export default function CalendarPage() {
     return () => controller.abort();
   }, [currentMonth]);
 
+  const isEmpty = !loading && Object.keys(coverImages).length === 0;
+  const isFirstTime = isEmpty && everHadPhotos === false && isSameMonth(currentMonth, new Date());
+
   return (
     <div className="space-y-4">
       <CalendarNav currentMonth={currentMonth} onMonthChange={setCurrentMonth} />
       {loading ? (
         <CalendarGridSkeleton />
       ) : (
-        <CalendarGrid currentMonth={currentMonth} coverImages={coverImages} />
+        <>
+          {isFirstTime && <FirstTimeCard />}
+          {isEmpty && !isFirstTime && (
+            <EmptyMonthBanner month={format(currentMonth, "MMMM")} />
+          )}
+          <CalendarGrid currentMonth={currentMonth} coverImages={coverImages} />
+        </>
       )}
+    </div>
+  );
+}
+
+function FirstTimeCard() {
+  return (
+    <div className="rounded-2xl border bg-gradient-to-br from-rose-50 to-pink-50 p-6 text-center">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
+        <Heart className="h-6 w-6 text-rose-500" />
+      </div>
+      <h2 className="text-lg font-semibold">Start your story together</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Upload your first photo to begin capturing life&apos;s moments on your shared calendar.
+      </p>
+      <Link href="/upload" className="inline-block mt-4">
+        <Button size="sm" className="bg-rose-500 hover:bg-rose-600">
+          <Camera className="mr-1.5 h-4 w-4" />
+          Upload Your First Photo
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function EmptyMonthBanner({ month }: { month: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-muted-foreground/20 bg-muted/10 px-4 py-3 text-center">
+      <p className="text-sm text-muted-foreground">
+        No moments captured in {month} yet.{" "}
+        <Link href="/upload" className="text-rose-500 hover:text-rose-600 font-medium underline-offset-2 hover:underline">
+          Add a photo
+        </Link>
+      </p>
     </div>
   );
 }

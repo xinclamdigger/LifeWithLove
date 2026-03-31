@@ -6,6 +6,8 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
+  getDaysInMonth,
+  isSameMonth,
   format,
 } from "date-fns";
 import { CalendarCell, type CoverImage } from "./CalendarCell";
@@ -26,6 +28,11 @@ export function CalendarGrid({ currentMonth, coverImages, readOnly, userId }: Ca
   const calendarEnd = endOfWeek(monthEnd);
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  const totalDays = getDaysInMonth(currentMonth);
+  const filledDays = days.filter(
+    (d) => isSameMonth(d, currentMonth) && coverImages[format(d, "yyyy-MM-dd")]
+  ).length;
 
   return (
     <div>
@@ -54,6 +61,29 @@ export function CalendarGrid({ currentMonth, coverImages, readOnly, userId }: Ca
           );
         })}
       </div>
+
+      {/* Month progress indicator */}
+      {!readOnly && (
+        <MonthProgress filled={filledDays} total={totalDays} />
+      )}
+    </div>
+  );
+}
+
+function MonthProgress({ filled, total }: { filled: number; total: number }) {
+  const pct = total > 0 ? (filled / total) * 100 : 0;
+
+  return (
+    <div className="mt-4 flex items-center gap-3">
+      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full rounded-full bg-rose-400 transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-xs text-muted-foreground whitespace-nowrap">
+        {filled} of {total} days captured
+      </span>
     </div>
   );
 }

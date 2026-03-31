@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, ImagePlus } from "lucide-react";
+import { ArrowLeft, ImagePlus, Camera } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ImageCard, type ImageData } from "@/components/images/ImageCard";
@@ -92,21 +92,23 @@ export default function DateDetailPage({
           ))}
         </div>
       ) : images.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ImagePlus className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-sm font-medium">No photos for this date</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50">
+            <Camera className="h-7 w-7 text-rose-400" />
+          </div>
+          <p className="text-base font-semibold">No moments yet</p>
+          <p className="mt-1 text-sm text-muted-foreground max-w-xs">
+            {isOwner
+              ? "This day is waiting for its story. Upload a photo to capture the moment."
+              : "No photos have been shared for this date yet."}
+          </p>
           {isOwner && (
-            <>
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload a photo to capture this moment
-              </p>
-              <Link href={`/upload?date=${date}`} className="mt-4">
-                <Button size="sm">
-                  <ImagePlus />
-                  Upload Photo
-                </Button>
-              </Link>
-            </>
+            <Link href={`/upload?date=${date}`} className="mt-5">
+              <Button size="sm" className="bg-rose-500 hover:bg-rose-600">
+                <Camera className="mr-1.5 h-4 w-4" />
+                Capture This Moment
+              </Button>
+            </Link>
           )}
         </div>
       ) : (
