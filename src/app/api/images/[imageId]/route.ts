@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { images } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getPublicUrl } from "@/lib/r2";
 
 let _r2: S3Client | null = null;
 function getR2() {
@@ -19,6 +20,46 @@ function getR2() {
     });
   }
   return _r2;
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ imageId: string }> }
+) {
+  const [session, { imageId }] = await Promise.all([auth(), params]);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const image = await db
+    .select()
+    .from(images)
+    .where(and(eq(images.id, imageId), eq(images.userId, session.user.id)))
+    .get();
+
+  if (!image) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const body = await request.json();
+  const updates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+
+  if ("description" in body) updates.description = body.description || null;
+  if ("location" in body) updates.location = body.location || null;
+
+  await db.update(images).set(updates).where(eq(images.id, imageId));
+
+  return NextResponse.json({
+    id: image.id,
+    date: image.date,
+    url: getPublicUrl(image.r2Key),
+    thumbnailUrl: getPublicUrl(image.thumbnailR2Key || image.r2Key),
+    description: updates.description ?? image.description,
+    location: updates.location ?? image.location,
+    tags: image.tags ? JSON.parse(image.tags) : [],
+    isCover: image.isCover,
+    createdAt: image.createdAt,
+  });
 }
 
 export async function DELETE(
