@@ -8,6 +8,20 @@
       "when": 1774237226178,
       "tag": "0000_previous_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776311700853,
+      "tag": "0001_ambiguous_quentin_quire",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776491530747,
+      "tag": "0002_dapper_khan",
+      "breakpoints": true
     }
   ]
 }

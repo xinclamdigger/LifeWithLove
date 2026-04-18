@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { startOfMonth, format, isSameMonth } from "date-fns";
 import Link from "next/link";
 import { Heart, Camera } from "lucide-react";
@@ -10,6 +11,7 @@ import { CalendarGrid, DAY_HEADERS } from "@/components/calendar/CalendarGrid";
 import type { CoverImage } from "@/components/calendar/CalendarCell";
 
 export default function CalendarPage() {
+  const { data: session } = useSession();
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [coverImages, setCoverImages] = useState<Record<string, CoverImage>>({});
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,12 @@ export default function CalendarPage() {
           {isEmpty && !isFirstTime && (
             <EmptyMonthBanner month={format(currentMonth, "MMMM")} />
           )}
-          <CalendarGrid currentMonth={currentMonth} coverImages={coverImages} />
+          <CalendarGrid
+            currentMonth={currentMonth}
+            coverImages={coverImages}
+            calendarUserId={session?.user?.id}
+            currentUserId={session?.user?.id}
+          />
         </>
       )}
     </div>

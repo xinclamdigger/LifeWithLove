@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, use } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { startOfMonth, format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +16,7 @@ export default function SharedCalendarPage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = use(params);
+  const { data: session } = useSession();
   const router = useRouter();
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [coverImages, setCoverImages] = useState<Record<string, CoverImage>>({});
@@ -111,6 +113,8 @@ export default function SharedCalendarPage({
           coverImages={coverImages}
           readOnly
           userId={userId}
+          calendarUserId={userId}
+          currentUserId={session?.user?.id}
         />
       )}
     </div>

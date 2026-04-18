@@ -1,0 +1,1 @@
+ALTER TABLE `stickers` ADD `rotation` integer DEFAULT 0 NOT NULL;

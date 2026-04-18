@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   startOfMonth,
   endOfMonth,
@@ -11,6 +12,10 @@ import {
   format,
 } from "date-fns";
 import { CalendarCell, type CoverImage } from "./CalendarCell";
+import { StickerOverlay } from "@/components/stickers/StickerOverlay";
+import { StickerPanel } from "@/components/stickers/StickerPanel";
+import { useStickerState } from "@/components/stickers/useStickerState";
+import type { StickerType } from "@/lib/stickers";
 
 export const DAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -19,9 +24,18 @@ interface CalendarGridProps {
   coverImages: Record<string, CoverImage>; // keyed by YYYY-MM-DD
   readOnly?: boolean;
   userId?: string;
+  calendarUserId?: string;
+  currentUserId?: string;
 }
 
-export function CalendarGrid({ currentMonth, coverImages, readOnly, userId }: CalendarGridProps) {
+export function CalendarGrid({
+  currentMonth,
+  coverImages,
+  readOnly,
+  userId,
+  calendarUserId,
+  currentUserId,
+}: CalendarGridProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart);
@@ -34,8 +48,20 @@ export function CalendarGrid({ currentMonth, coverImages, readOnly, userId }: Ca
     (d) => isSameMonth(d, currentMonth) && coverImages[format(d, "yyyy-MM-dd")]
   ).length;
 
+  const monthStr = format(currentMonth, "yyyy-MM");
+
+  const showStickers = !!calendarUserId && !!currentUserId;
+
+  const { stickers, loading: stickersLoading, addSticker, updateSticker, deleteSticker, bringToFront } =
+    useStickerState({
+      calendarUserId: calendarUserId || "",
+      month: monthStr,
+    });
+
+  const [selectedStickerType, setSelectedStickerType] = useState<StickerType | null>(null);
+
   return (
-    <div>
+    <div className="relative">
       <div className="grid grid-cols-7 gap-1.5 mb-1">
         {DAY_HEADERS.map((day) => (
           <div
@@ -46,21 +72,46 @@ export function CalendarGrid({ currentMonth, coverImages, readOnly, userId }: Ca
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          return (
-            <CalendarCell
-              key={key}
-              date={day}
-              currentMonth={currentMonth}
-              coverImage={coverImages[key]}
-              readOnly={readOnly}
-              userId={userId}
-            />
-          );
-        })}
+      <div className="relative">
+        <div className="grid grid-cols-7 gap-1.5">
+          {days.map((day) => {
+            const key = format(day, "yyyy-MM-dd");
+            return (
+              <CalendarCell
+                key={key}
+                date={day}
+                currentMonth={currentMonth}
+                coverImage={coverImages[key]}
+                readOnly={readOnly}
+                userId={userId}
+              />
+            );
+          })}
+        </div>
+
+        {/* Sticker overlay */}
+        {showStickers && (
+          <StickerOverlay
+            stickers={stickers}
+            currentUserId={currentUserId}
+            selectedStickerType={selectedStickerType}
+            onAdd={addSticker}
+            onUpdate={updateSticker}
+            onDelete={deleteSticker}
+            onBringToFront={bringToFront}
+            onStickerPlaced={() => setSelectedStickerType(null)}
+          />
+        )}
       </div>
+
+      {/* Sticker panel */}
+      {showStickers && (
+        <StickerPanel
+          selectedStickerType={selectedStickerType}
+          onSelectSticker={setSelectedStickerType}
+          disabled={stickersLoading}
+        />
+      )}
 
       {/* Month progress indicator */}
       {!readOnly && (

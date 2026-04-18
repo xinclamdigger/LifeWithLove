@@ -37,6 +37,30 @@ export const images = sqliteTable(
   ]
 );
 
+export const stickers = sqliteTable(
+  "stickers",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    calendarUserId: text("calendar_user_id")
+      .notNull()
+      .references(() => users.id),
+    month: text("month").notNull(), // YYYY-MM
+    stickerType: text("sticker_type").notNull(),
+    xPercent: integer("x_percent").notNull(), // 0-10000 basis points
+    yPercent: integer("y_percent").notNull(), // 0-10000 basis points
+    scale: integer("scale").notNull().default(100), // percentage: 100 = default
+    rotation: integer("rotation").notNull().default(0), // degrees 0-359
+    zIndex: integer("z_index").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("idx_stickers_calendar_month").on(table.calendarUserId, table.month),
+  ]
+);
+
 export const shares = sqliteTable(
   "shares",
   {

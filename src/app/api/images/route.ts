@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { images, shares } from "@/db/schema";
+import { hasAccess } from "@/lib/access";
+import { images } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { getPublicUrl } from "@/lib/r2";
@@ -20,17 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing or invalid date param" }, { status: 400 });
   }
 
-  // Authorization: must be owner or have a share
-  if (userId !== session.user.id) {
-    const share = await db
-      .select({ id: shares.id })
-      .from(shares)
-      .where(and(eq(shares.ownerId, userId), eq(shares.sharedWithId, session.user.id)))
-      .get();
-
-    if (!share) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  if (!(await hasAccess(userId, session.user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const results = await db
