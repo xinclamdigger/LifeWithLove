@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, ImagePlus, Camera, MapPin, Clock, Pencil, Check, X, Upload } from "lucide-react";
+import { ArrowLeft, ImagePlus, Camera, MapPin, Clock, Pencil, Check, X, Upload, Star } from "lucide-react";
 import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,22 @@ export default function DateDetailPage({
     }
   };
 
+  const handleSetCover = async (imageId: string) => {
+    const res = await fetch(`/api/images/${imageId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isCover: true }),
+    });
+    if (res.ok) {
+      setImages((prev) =>
+        prev.map((img) => ({ ...img, isCover: img.id === imageId }))
+      );
+      toast.success("Cover photo updated");
+    } else {
+      toast.error("Failed to update cover");
+    }
+  };
+
   const handleUpdateCaption = async (imageId: string, description: string) => {
     const res = await fetch(`/api/images/${imageId}`, {
       method: "PATCH",
@@ -139,6 +155,7 @@ export default function DateDetailPage({
                   onView={() => setLightboxImage(image)}
                   onDelete={isOwner ? handleDelete : undefined}
                   onUpdateCaption={isOwner ? handleUpdateCaption : undefined}
+                  onSetCover={isOwner ? handleSetCover : undefined}
                 />
               ))}
             </div>
@@ -221,11 +238,13 @@ function TimelineItem({
   onView,
   onDelete,
   onUpdateCaption,
+  onSetCover,
 }: {
   image: ImageData;
   onView: () => void;
   onDelete?: (id: string) => void;
   onUpdateCaption?: (id: string, desc: string) => void;
+  onSetCover?: (id: string) => void;
 }) {
   const time = (() => {
     try {
@@ -269,19 +288,33 @@ function TimelineItem({
             )}
           </div>
         </div>
-        {onDelete && (
-          <Button
-            variant="destructive"
-            size="icon-xs"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(image.id);
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onSetCover && (
+            <Button
+              variant="secondary"
+              size="icon-xs"
+              title="Set as cover"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetCover(image.id);
+              }}
+            >
+              <Star className="h-3 w-3" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="destructive"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(image.id);
+              }}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

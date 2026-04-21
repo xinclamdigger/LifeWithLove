@@ -42,10 +42,27 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const updates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  const now = new Date().toISOString();
+  const updates: Record<string, unknown> = { updatedAt: now };
 
   if ("description" in body) updates.description = body.description || null;
   if ("location" in body) updates.location = body.location || null;
+
+  let isCover = image.isCover;
+  if (body.isCover === true && !image.isCover) {
+    await db
+      .update(images)
+      .set({ isCover: false, updatedAt: now })
+      .where(
+        and(
+          eq(images.userId, session.user.id),
+          eq(images.date, image.date),
+          eq(images.isCover, true)
+        )
+      );
+    updates.isCover = true;
+    isCover = true;
+  }
 
   await db.update(images).set(updates).where(eq(images.id, imageId));
 
@@ -57,7 +74,7 @@ export async function PATCH(
     description: updates.description ?? image.description,
     location: updates.location ?? image.location,
     tags: image.tags ? JSON.parse(image.tags) : [],
-    isCover: image.isCover,
+    isCover,
     createdAt: image.createdAt,
   });
 }
