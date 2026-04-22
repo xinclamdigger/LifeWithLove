@@ -1,13 +1,7 @@
 import { createClient, type Client } from "@libsql/client";
 import { nanoid } from "nanoid";
 
-const TABLES = [
-  "images",
-  "stickers",
-  "custom_stickers",
-  "shares",
-  "users",
-];
+const TABLES = ["images", "stickers", "shares", "users"];
 
 let _client: Client | null = null;
 
