@@ -47,3 +47,7 @@ next-env.d.ts
 /playwright/.cache/
 test.db
 test.db-*
+
+# vitest
+vitest.db
+vitest.db-*
