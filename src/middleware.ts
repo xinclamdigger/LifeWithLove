@@ -1,4 +1,9 @@
-export { auth as middleware } from "@/lib/auth";
+import NextAuth from "next-auth";
+import authConfig from "@/lib/auth.config";
+
+// Use the edge-safe auth config (no DB access) so middleware can run in the
+// Edge Runtime. The full auth instance with DB callbacks lives in lib/auth.ts.
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
   matcher: [
